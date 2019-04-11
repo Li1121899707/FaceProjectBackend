@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.faceproject.mapper.AttendanceTimeMapper">
+	<resultMap type="com.faceproject.beans.AttendanceTime"
+		id="QueryAllResultMap">
+		<id property="atId" jdbcType="INTEGER" column="a_t_id" />
+		<result property="atDate" jdbcType="VARCHAR" column="a_t_date" />
+		<result property="atStart" jdbcType="VARCHAR"
+			column="a_t_start" />
+		<result property="atEnd" jdbcType="VARCHAR" column="a_t_end" />
+		<result property="atEmployeeId" jdbcType="INTEGER"
+			column="a_t_employee_id" />
+		<result property="eiName" jdbcType="VARCHAR" column="e_i_name" />
+	</resultMap>
+
+	<!-- 根据分页数据index 查询数据 -->
+	<select id="queryAllAttendanceTime"
+		parameterType="com.faceproject.beans.AttendanceTime"
+		resultMap="QueryAllResultMap">
+		SELECT a_t_id,a_t_start,a_t_end, a_t_date,a_t_employee_id,
+		e_i_name
+		FROM employee_info,attendance_time
+		WHERE
+		attendance_time.a_t_employee_id =
+		employee_info.e_i_id
+		limit
+		#{index},8
+	</select>
+	<!-- 用于获取总页数 -->
+
+	<select id="pagecount" resultType="int">
+		select count(*) from
+		attendance_time
+	</select>
+
+	<update id="updateAttendanceTime"
+		parameterType="com.faceproject.beans.AttendanceTime">
+		UPDATE attendance_time
+		SET a_t_end =
+		#{atEnd,jdbcType=VARCHAR}
+		WHERE
+		a_t_employee_id =
+		#{atEmployeeId,jdbcType=INTEGER}
+		AND
+		a_t_date = #{atDate,jdbcType=VARCHAR}
+	</update>
+
+
+	<insert id="createAttendanceTime"
+		parameterType="com.faceproject.beans.AttendanceTime">
+		<!-- 返回插入的主键值 -->
+		<selectKey resultType="java.lang.Integer" order="AFTER"
+			keyProperty="atId">
+			SELECT LAST_INSERT_ID() AS ID
+		</selectKey>
+		insert into attendance_time(a_t_start,a_t_employee_id,a_t_date)
+		values(#{atStart},#{atEmployeeId}, #{atDate})
+	</insert>
+
+	<select id="queryEmployeeStartTime"
+		parameterType="com.faceproject.beans.AttendanceTime"
+		resultMap="QueryAllResultMap">
+		SELECT *
+		FROM attendance_time
+		WHERE
+		a_t_employee_id =
+		#{atEmployeeId,jdbcType=INTEGER} 
+		AND a_t_date = #{atDate,jdbcType=VARCHAR}
+	</select>
+
+	<select id="queryEmployeeEndTime"
+		parameterType="com.faceproject.beans.AttendanceTime"
+		resultMap="QueryAllResultMap">
+		SELECT *
+		FROM attendance_time
+		WHERE
+		a_t_employee_id =
+		#{atEmployeeId,jdbcType=INTEGER} AND
+		a_t_date = #{atDate,jdbcType=VARCHAR}
+	</select>
+
+
+</mapper>

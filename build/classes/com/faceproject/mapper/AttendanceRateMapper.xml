@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.faceproject.mapper.AttendanceRateMapper">
+    <resultMap type="com.faceproject.beans.AttendanceRate"
+        id="QueryAllRateMap">
+        <id property="eid" jdbcType="INTEGER" column="a_r_employee_id" />
+        <result property="name" jdbcType="VARCHAR" column="e_i_name" />
+        <result property="late" jdbcType="VARCHAR" column="SUM(ar.a_r_late)" />
+        <result property="early" jdbcType="VARCHAR" column="SUM(ar.a_r_early)" />
+        <result property="absence" jdbcType="VARCHAR" column="SUM(ar.a_r_absence)" />
+    </resultMap>
+
+    <select id="pagecount" resultType="int">
+        select count(*) from
+        employee_info
+    </select>
+
+    <select id="queryAllAttendanceRate"
+        parameterType="com.faceproject.beans.AttendanceRate"
+        resultMap="QueryAllRateMap">
+        SELECT 
+        ar.a_r_employee_id, ei.e_i_name, SUM(ar.a_r_late), SUM(ar.a_r_early), SUM(ar.a_r_absence)
+        FROM attendance_rate AS ar, employee_info AS ei 
+        WHERE ar.a_r_employee_id = ei.e_i_id 
+        and DATE_FORMAT(a_r_date,'%Y-%m-%d')<![CDATA[ >= ]]>DATE_FORMAT(#{ldate,jdbcType=VARCHAR},'%Y-%m-%d') 
+        and DATE_FORMAT(a_r_date,'%Y-%m-%d')<![CDATA[ <= ]]>DATE_FORMAT(#{rdate,jdbcType=VARCHAR},'%Y-%m-%d') 
+        GROUP BY(a_r_employee_id) limit #{index},8
+    </select>
+
+</mapper>

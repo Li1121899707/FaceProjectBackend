@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.faceproject.mapper.EmployeeInfoMapper">
+	<resultMap type="com.faceproject.beans.EmployeeInfo"
+		id="QueryAllResultMap">
+		<id property="eiId" jdbcType="INTEGER" column="e_i_id" />
+		<result property="eiName" jdbcType="VARCHAR" column="e_i_name" />
+		<result property="eiFaceInfo" jdbcType="VARCHAR"
+			column="e_i_face_info" />
+		<result property="eiJob" jdbcType="INTEGER" column="e_i_job" />
+		<result property="ejProfession" jdbcType="VARCHAR"
+			column="e_j_profession" />
+	</resultMap>
+
+	<!-- 根据分页数据index 查询数据 -->
+	<select id="queryAllEmployeeInfo"
+		parameterType="com.faceproject.beans.EmployeeInfo"
+		resultMap="QueryAllResultMap">
+		SELECT e_i_id, e_i_name, e_i_face_info, e_i_job,
+		e_j_profession FROM employee_info, employee_job WHERE
+		employee_info.e_i_job = employee_job.e_j_id order by e_i_id
+		limit #{index},8
+	</select>
+	<!-- 用于获取总页数 -->
+	<select id="pagecount" resultType="int">
+		select count(*) from
+		employee_info
+	</select>
+
+	<select id="queryOneEmployeeInfo"
+		parameterType="com.faceproject.beans.EmployeeInfo"
+		resultMap="QueryAllResultMap">
+		SELECT e_i_id, e_i_name, e_i_face_info, e_i_job,
+		e_j_profession FROM
+		employee_info, employee_job
+		<where>
+			<if test="eiId != null and eiId != 0">
+				e_i_id = #{eiId, jdbcType=INTEGER}
+			</if>
+			<if test="eiName != null and eiName != ''">
+				AND e_i_name = #{eiName, jdbcType=VARCHAR}
+			</if>
+			<if test="eiFaceInfo != null and eiFaceInfo != ''">
+				AND e_i_face_info = #{eiFaceInfo, jdbcType=VARCHAR}
+			</if>
+			AND employee_info.e_i_job = employee_job.e_j_id
+		</where>
+	</select>
+
+	<select id="queryMaxId"
+		parameterType="com.faceproject.beans.EmployeeInfo"
+		resultMap="QueryAllResultMap">
+		SELECT * FROM employee_info WHERE e_i_id=(SELECT MAX(e_i_id)
+		FROM employee_info )
+	</select>
+
+	<update id="updateEmployeeInfo"
+		parameterType="com.faceproject.beans.EmployeeInfo">
+		UPDATE employee_info
+		SET e_i_name =
+		#{eiName,jdbcType=VARCHAR},
+		e_i_job = #{eiJob,jdbcType=INTEGER}
+		WHERE
+		e_i_id = #{eiId,jdbcType=INTEGER}
+	</update>
+
+	<delete id="deleteEmployeeInfo"
+		parameterType="com.faceproject.beans.EmployeeInfo">
+		DELETE FROM employee_info WHERE e_i_id = #{id}
+	</delete>
+
+	<insert id="createEmployeeInfo"
+		parameterType="com.faceproject.beans.EmployeeInfo"
+		useGeneratedKeys="true" keyProperty="eiId">
+		<!-- 返回插入的主键值 -->
+		<!-- <selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="eiId"> 
+			SELECT LAST_INSERT_ID() AS ID </selectKey> -->
+		insert into employee_info(e_i_id, e_i_name, e_i_face_info, e_i_job)
+		values(#{eiId}, #{eiName}, #{eiFaceInfo}, #{eiJob})
+	</insert>
+	
+	<resultMap type="com.faceproject.beans.TempDate"
+		id="TempDateMap">
+		<id property="tdId" jdbcType="INTEGER" column="t_d_id" />
+		<result property="tdEmployeeId" jdbcType="INTEGER"
+			column="t_d_employee_id" />
+		<result property="tdDate" jdbcType="VARCHAR" column="t_d_date" />
+	</resultMap>
+	
+	<insert id="createTempEmployeeInfo"
+		parameterType="com.faceproject.beans.TempDate"
+		useGeneratedKeys="true" keyProperty="tdId">
+		insert into temp_date(t_d_employee_id)
+		values(#{tdEmployeeId})
+	</insert>
+
+</mapper>

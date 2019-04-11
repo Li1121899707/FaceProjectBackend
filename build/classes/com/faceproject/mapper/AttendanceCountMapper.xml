@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.faceproject.mapper.AttendanceCountMapper">
+	<resultMap type="com.faceproject.beans.AttendanceCount"
+		id="QueryAllResultMap">
+		<id property="arId" jdbcType="INTEGER" column="a_r_id" />
+		<result property="arEmployeeId" jdbcType="INTEGER"
+			column="t_d_employee_id" />
+		<result property="eiName" jdbcType="VARCHAR" column="e_i_name" />
+		<result property="arDate" jdbcType="VARCHAR" column="a_t_start" />
+		<result property="atStart" jdbcType="VARCHAR" column="a_r_late" />
+		<result property="atEnd" jdbcType="VARCHAR" column="a_t_end" />
+		<result property="arLate" jdbcType="VARCHAR" column="a_r_late" />
+		<result property="arEarly" jdbcType="VARCHAR"
+			column="a_r_early" />
+		<result property="arAbsence" jdbcType="VARCHAR"
+			column="a_r_absence" />
+
+	</resultMap>
+
+	<!-- 根据分页数据index 查询数据 -->
+	<!-- <select id="queryAllAttendanceCount" parameterType="com.faceproject.beans.AttendanceCount" 
+		resultMap="QueryAllResultMap"> SELECT * FROM temp_date AS A LEFT JOIN ( SELECT 
+		a_r_id,a_t_start,a_t_end, a_r_date, a_r_late, a_r_early,a_r_absence,a_r_employee_id, 
+		e_i_name FROM employee_info,attendance_rate,attendance_time WHERE attendance_rate.a_r_employee_id 
+		=employee_info.e_i_id AND attendance_rate.a_r_employee_id = attendance_time.a_t_employee_id 
+		AND attendance_rate.a_r_date =attendance_time.a_t_date ) B ON A.t_d_employee_id 
+		= B.a_r_employee_id AND A.t_d_date = B.a_r_date limit #{index},8 </select> -->
+	<!-- 用于获取总页数 -->
+
+	<select id="pagecount" resultType="int">
+		select count(*) from
+		attendance_rate
+	</select>
+
+	<!-- 迟到 -->
+	<select id="queryAllLate"
+		parameterType="com.faceproject.beans.AttendanceCount"
+		resultMap="QueryAllResultMap">
+		SELECT t_d_employee_id FROM temp_date AS A LEFT JOIN (
+		SELECT *
+		FROM
+		attendance_time
+		) B ON
+		A.t_d_employee_id = B.a_t_employee_id
+		AND
+		A.t_d_date = B.a_t_date
+		WHERE
+		TIME(B.`a_t_start`) <![CDATA[ > ]]>
+		'08:00:00'
+	</select>
+
+	<!-- 早退 -->
+	<select id="queryAllEarly"
+		parameterType="com.faceproject.beans.AttendanceCount"
+		resultMap="QueryAllResultMap">
+		SELECT t_d_employee_id FROM temp_date AS A LEFT JOIN (
+		SELECT *
+		FROM
+		attendance_time
+		) B ON
+		A.t_d_employee_id = B.a_t_employee_id
+		AND
+		A.t_d_date = B.a_t_date
+		WHERE
+		TIME(B.`a_t_end`) <![CDATA[ < ]]>
+		'17:00:00' OR B.`a_t_end` IS NULL
+	</select>
+
+	<!-- Mybatis 不能返回基本类型数组，只能返回对象的list -->
+	<!-- 缺勤 -->
+	<select id="queryAllAbsence"
+		parameterType="com.faceproject.beans.AttendanceCount"
+		resultMap="QueryAllResultMap">
+		SELECT t_d_employee_id FROM temp_date AS A LEFT JOIN (
+		SELECT *
+		FROM
+		attendance_time
+		) B ON
+		A.t_d_employee_id = B.a_t_employee_id
+		AND A.t_d_date = B.a_t_date
+		WHERE
+		B.a_t_employee_id IS NULL
+	</select>
+
+	<resultMap type="com.faceproject.beans.EmployeeInfo"
+		id="QueryAllEmployeeInfoMap">
+		<id property="eiId" jdbcType="INTEGER" column="e_i_id" />
+	</resultMap>
+
+	<select id="queryAllEmployeeInfo"
+		parameterType="com.faceproject.beans.EmployeeInfo"
+		resultMap="QueryAllEmployeeInfoMap">
+		SELECT e_i_id FROM employee_info
+	</select>
+
+	<update id="updateCountLate"
+		parameterType="com.faceproject.beans.AttendanceCount">
+		UPDATE attendance_rate
+		SET
+		a_r_late='1'
+		WHERE
+		a_r_employee_id = #{eiid,jdbcType=INTEGER}
+		AND
+		a_r_date =
+		#{date,jdbcType=VARCHAR}
+	</update>
+
+	<update id="updateCountEarly" parameterType="java.util.List">
+		UPDATE
+		attendance_rate
+		SET
+		a_r_early='1'
+		WHERE
+		a_r_employee_id =
+		#{eiid,jdbcType=INTEGER}
+		AND
+		a_r_date = #{date,jdbcType=VARCHAR}
+	</update>
+
+	<update id="updateCountAbsence" parameterType="java.util.List">
+		UPDATE
+		attendance_rate
+		SET
+		a_r_absence='1'
+		WHERE
+		a_r_employee_id =
+		#{eiid,jdbcType=INTEGER}
+		AND
+		a_r_date = #{date,jdbcType=VARCHAR}
+	</update>
+
+	<insert id="createCount" parameterType="java.util.List">
+		<!-- 返回插入的主键值 -->
+		<selectKey resultType="java.lang.Integer" order="AFTER"
+			keyProperty="arId">
+			SELECT LAST_INSERT_ID() AS ID
+		</selectKey>
+		insert into
+		attendance_rate(a_r_date,a_r_late,a_r_early,a_r_absence,a_r_employee_id)
+		values
+		<foreach collection="list" item="item" index="index"
+			separator=",">
+			(#{date,jdbcType=VARCHAR},'0','0','0',#{item.eiId,jdbcType=INTEGER})
+		</foreach>
+	</insert>
+
+	<resultMap type="com.faceproject.beans.CountComplete"
+		id="countComplete">
+		<id property="ccId" jdbcType="INTEGER" column="c_c_id" />
+		<result property="ccDate" jdbcType="VARCHAR" column="c_c_date" />
+		<result property="ccComplete" jdbcType="VARCHAR"
+			column="c_c_complete" />
+	</resultMap>
+
+	<select id="isCountComplete"
+		parameterType="com.faceproject.beans.CountComplete"
+		resultMap="countComplete">
+		SELECT * FROM count_complete WHERE c_c_date =
+		#{date,jdbcType=VARCHAR}
+	</select>
+
+	<insert id="createCountComplete"
+		parameterType="com.faceproject.beans.CountComplete">
+		<!-- 返回插入的主键值 -->
+		<selectKey resultType="java.lang.Integer" order="AFTER"
+			keyProperty="ccId">
+			SELECT LAST_INSERT_ID() AS ID
+		</selectKey>
+		insert into
+		count_complete(c_c_date,c_c_complete)
+		values(#{date,jdbcType=VARCHAR},'1')
+	</insert>
+
+	<resultMap type="com.faceproject.beans.AttendanceCount"
+		id="QueryAllCountMap">
+		<id property="arId" jdbcType="INTEGER" column="a_r_id" />
+		<result property="arEmployeeId" jdbcType="INTEGER"
+			column="a_r_employee_id" />
+		<result property="eiName" jdbcType="VARCHAR" column="e_i_name" />
+		<result property="arDate" jdbcType="VARCHAR" column="a_r_date" />
+		<result property="arLate" jdbcType="VARCHAR" column="a_r_late" />
+		<result property="arEarly" jdbcType="VARCHAR"
+			column="a_r_early" />
+		<result property="arAbsence" jdbcType="VARCHAR"
+			column="a_r_absence" />
+
+	</resultMap>
+
+	<!-- 根据分页数据index 查询数据 -->
+	<select id="queryAllAttendanceCount"
+		parameterType="com.faceproject.beans.AttendanceCount"
+		resultMap="QueryAllCountMap">
+		SELECT a_r_id, a_r_date, a_r_late,
+		a_r_early,a_r_absence,a_r_employee_id,
+		e_i_name FROM
+		attendance_rate,employee_info WHERE
+		attendance_rate.a_r_employee_id =
+		employee_info.e_i_id ORDER BY a_r_date DESC, a_r_employee_id ASC
+		limit
+		#{index},8
+	</select>
+	<!-- 用于获取总页数 -->
+
+	<resultMap type="com.faceproject.beans.TempDate"
+		id="TempDateMap">
+		<id property="tdId" jdbcType="INTEGER" column="t_d_id" />
+		<result property="tdEmployeeId" jdbcType="INTEGER"
+			column="t_d_employee_id" />
+		<result property="tdDate" jdbcType="VARCHAR" column="t_d_date" />
+	</resultMap>
+
+	<update id="updateTempDate"
+		parameterType="com.faceproject.beans.TempDate">
+		UPDATE temp_date SET t_d_date = #{date,jdbcType=VARCHAR}
+	</update>
+
+</mapper>

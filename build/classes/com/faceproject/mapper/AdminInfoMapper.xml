@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.faceproject.mapper.AdminInfoMapper">
+    <resultMap type="com.faceproject.beans.AdminInfo"
+        id="QueryAdminInfoById">
+        <id property="aiId" jdbcType="INTEGER" column="a_i_id" />
+        <result property="aiName" jdbcType="VARCHAR" column="a_i_name" />
+        <result property="aiPwd" jdbcType="VARCHAR" column="a_i_pwd" />
+    </resultMap>
+
+    <select id="queryAdminInfo"
+        parameterType="com.faceproject.beans.AdminInfo"
+        resultMap="QueryAdminInfoById">
+        SELECT a_i_id, a_i_name, a_i_pwd 
+        FROM admin_info 
+        where a_i_id = #{aiId,jdbcType=INTEGER} AND a_i_pwd = #{aiPwd,jdbcType=VARCHAR}
+    </select>
+
+</mapper>
